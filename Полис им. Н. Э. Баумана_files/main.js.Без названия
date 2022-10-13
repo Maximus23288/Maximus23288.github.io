@@ -1,0 +1,338 @@
+$('a')
+    .filter('[href^="http"], [href^="//"]')
+    .not('[href*="' + window.location.host + '"]')
+    .not('.no-blank')
+    .attr('rel', 'noopener noreferrer')
+    .attr('target', '_blank');
+
+$('a:not(:has(img, i))')
+    .filter('[href^="http"], [href^="//"]')
+    .not('[href*="' + window.location.host + '"]')
+    .addClass('external');
+
+$(".js-preloader[data-type='bubbles']").each(function () {
+    $(this).addClass('preloader');
+    $(this).append('<div class="bubbles"></div>');
+    let i = 0;
+    while (i < 10) {
+        $(this).find('.bubbles').append('<div class="bubble"><div class="circle"></div></div>');
+        i++;
+    }
+});
+
+$(".videoplayer-wrapper").each(function () {
+    $(this).append('<i class="icon fi flaticon-video"></i>');
+});
+
+
+$(".content-body table").each(function () {
+    $(this).wrap("<div class='overflow-wrapper'></div>");
+    $(this).before("<div class='left-overflow-wrapper'></div>");
+    $(this).after("<div class='right-overflow-wrapper'></div>");
+    $(this).wrap("<div class='table-wrapper'></div>");
+    var marginRight = $(this).width() - $(this).parent().width();
+    if (marginRight > 0) {
+        $(this).parent().next(".right-overflow-wrapper").show();
+    }
+    $(this).parent().on('scroll', function (e) {
+        var marginLeft = $(this).scrollLeft();
+        var marginRight = $(this).find("table").width() - $(this).width() - $(this).scrollLeft();
+        if (marginLeft > 0) {
+            $(this).prev(".left-overflow-wrapper").show();
+        } else {
+            $(this).prev(".left-overflow-wrapper").hide();
+        }
+        if (marginRight > 0) {
+            $(this).next(".right-overflow-wrapper").show();
+        } else {
+            $(this).next(".right-overflow-wrapper").hide();
+        }
+    });
+});
+
+
+autoheight();
+$('.js-select2').select2();
+
+function autoheight() {
+    var text = $('.autoheight');
+
+    text.each(function () {
+        $(this).attr('rows', 1);
+        resize($(this));
+    });
+
+    text.on('input', function () {
+        resize($(this));
+    });
+
+    function resize($text) {
+        $text.css('height', 'auto');
+        $text.css('height', $text[0].scrollHeight + 'px');
+    }
+}
+
+function initInputFocus() {
+    $('.has-prepend').focusin(function () {
+        $(this).addClass('focused');
+    });
+    $('.has-prepend').focusout(function () {
+        $(this).removeClass('focused');
+    });
+    $('.has-append').focusin(function () {
+        $(this).addClass('focused');
+    });
+    $('.has-append').focusout(function () {
+        $(this).removeClass('focused');
+    });
+}
+
+initInputFocus();
+
+window.addEventListener(
+    'message',
+    function (e) {
+        if (e.data.type == 'iframe_set_height') {
+            $('#frame-fuid-' + e.data.fuid).height(e.data.height + 5);
+        }
+    },
+    false
+);
+Vue.component('app-global-menu', {
+    template: '<div class="bmstu-projects" ref="menu"><div class="bmstu-projects-toggle" @click="toggleShow" :class="{active: isShow}"><svg class="icon svg-icon"><use xlink:href="#dots-menu"></use></svg></div><div class="panel-wrapper" :class="{active: isShow}"><div class="panel"><template v-for="item in items"><a :href="item.url" class="item" :class="cssClass(item)"><img :src="item.icon" class="item-icon">{{ item.title }}</a></template></div></div></div>',
+    props: [],
+    data: function () {
+        return {
+            isShow: false,
+            items: [{
+                    title: 'Аккаунт',
+                    url: ls.registry.get('PATH_SSO') + '/profile/go/',
+                    cssClass: 'avatar',
+                    icon: this.getPathLogo('sso')
+                },
+                {
+                    title: 'Издательство',
+                    url: 'https://bmstu.press',
+                    icon: this.getPathLogo('press')
+                },
+                {
+                    title: 'Поликлиника',
+                    url: 'https://bmstu.health',
+                    icon: this.getPathLogo('health')
+                },
+                {
+                    title: 'Degree',
+                    url: 'https://bmstu.degree',
+                    icon: this.getPathLogo('degree')
+                },
+                {
+                    title: 'Полис',
+                    url: 'https://bmstu.net',
+                    icon: this.getPathLogo('polis')
+                },
+                {
+                    title: 'Codes',
+                    url: 'https://bmstu.codes',
+                    icon: this.getPathLogo('codes')
+                },
+                {
+                    title: 'НейроSPOC',
+                    url: 'https://bmstu.online',
+                    icon: this.getPathLogo('neuro')
+                },
+                {
+                    title: 'Mirror',
+                    url: 'https://mirror.bmstu.cloud',
+                    icon: this.getPathLogo('mirror')
+                }
+            ]
+        };
+    },
+    computed: {},
+    created: function () {
+        var onClickOutside = function (e) {
+            if (this.isShow) {
+                if (!this.$refs['menu'].contains(e.target)) {
+                    this.toggleShow()
+                }
+            }
+        }.bind(this);
+        var clickHandler = 'ontouchstart' in document.documentElement ? 'touchstart' : 'click';
+        document.addEventListener(clickHandler, onClickOutside);
+
+        this.$on('hook:beforeDestroy', function () {
+            document.removeEventListener('click', onClickOutside)
+        });
+    },
+    methods: {
+        getPathLogo: function (logo) {
+            if (logo == 'sso') {
+                var user = ls.registry.get('user_current');
+                if (user) {
+                    return user.avatar;
+                }
+            }
+            return ls.registry.get('PATH_FRAMEWORK_DELIVERY') + 'framework-images/projects/logo-' + logo + '.svg';
+        },
+        toggleShow: function () {
+            this.isShow = !this.isShow;
+            if (this.isShow) {
+                document.documentElement.style.overflow = 'hidden';
+            } else {
+                document.documentElement.style.overflow = 'auto';
+            }
+        },
+        cssClass: function (item) {
+            var classes = [];
+            if (item.cssClass) {
+                classes.push(item.cssClass);
+            }
+            return classes;
+        }
+    }
+});
+
+jQuery(function ($) {
+    if ($('.js-app-global-menu').length) {
+        $('.js-app-global-menu').each(function (k, v) {
+            new Vue({
+                el: v,
+                data: {},
+                components: {}
+            });
+        });
+    }
+});
+(function ($) {
+    "use strict";
+
+    $.widget("livestreet.lsValidationField", $.livestreet.lsComponent, {
+        /**
+         * Дефолтные опции
+         */
+        options: {},
+
+        parent: null,
+        /**
+         * Конструктор
+         *
+         * @constructor
+         * @private
+         */
+        _create: function () {
+            this._super();
+            if (this.element.hasClass('validating')) {
+                // is parent
+                this.parent = this.element;
+            } else {
+                // is input
+                this.parent = this.element.parents('.validating');
+                this.element.on('input', function () {
+                    this.clearError();
+                }.bind(this));
+            }
+        },
+        clearError: function () {
+            this.parent.removeClass('validating-error');
+            var result = this.getResult();
+            if (result) {
+                result.text('');
+            }
+        },
+        getResult: function () {
+            var result = this.parent.find('.validating-result');
+            if (!result.length) {
+                var resultDefined = this.parent.data('validationResult');
+                if (resultDefined) {
+                    result = $(resultDefined);
+                } else {
+                    result = $('<div class="validating-result"></div>');
+                    this.parent.append(result);
+                }
+            }
+            return result.length ? result : null;
+        },
+        showError: function (errors) {
+            if (!this.parent) {
+                return;
+            }
+            this.parent.addClass('validating-error');
+            var result = this.getResult();
+            if (result) {
+                result.html('<div>' + errors.join('<br>') + '</div>');
+            }
+        },
+        isInit: function () {
+            return !!this.parent.length;
+        }
+    });
+})(jQuery);
+(function ($) {
+    "use strict";
+
+    $.widget("livestreet.lsValidationForm", $.livestreet.lsComponent, {
+        /**
+         * Дефолтные опции
+         */
+        options: {},
+
+        fieldUsed: [],
+        /**
+         * Конструктор
+         *
+         * @constructor
+         * @private
+         */
+        _create: function () {
+            this._super();
+            this.fieldUsed = [];
+
+            $(this.element).on('validation:show-field-errors', function (e, errors) {
+                this.showFieldErrors(errors);
+            }.bind(this));
+
+            $(this.element).on('validation:clear-field-errors', function (e) {
+                this.clearFieldErrors();
+            }.bind(this));
+        },
+        showFieldErrors: function (errors) {
+            $.each(errors, function (key, errors) {
+                var field = this.element.find('[name="' + key + '"]');
+                if (!field.length) {
+                    field = this.element.find('[data-name=' + key.replace(new RegExp("\\[",'g'), '\\[').replace(new RegExp("\\]",'g'), '\\]') + ']');
+                }
+                field.lsValidationField();
+                if (field.lsValidationField('isInit')) {
+                    if (!field.data('used')) {
+                        this.fieldUsed.push(field);
+                        field.data('used', true);
+                    }
+                    field.lsValidationField('showError', errors);
+                }
+            }.bind(this));
+            var formValidating = this.getFormValidating();
+            if (formValidating) {
+                formValidating.addClass('form-validating-error');
+            }
+        },
+        clearFieldErrors: function () {
+            $.each(this.fieldUsed, function (key, field) {
+                field.lsValidationField('clearError');
+            }.bind(this));
+            var formValidating = this.getFormValidating();
+            if (formValidating) {
+                formValidating.removeClass('form-validating-error');
+            }
+        },
+        getFormValidating: function () {
+            if (this.element.hasClass('form-validating')) {
+                return this.element;
+            }
+            var formValidating = this.element.parents('.form-validating');
+            if (formValidating.length) {
+                return formValidating;
+            }
+            return null;
+        }
+    });
+})(jQuery);
